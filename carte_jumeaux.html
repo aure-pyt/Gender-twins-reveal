@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carte à gratter - Révélation jumeaux</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f2f7;
+      padding: 20px;
+    }
+    .game-container {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+      padding: 20px;
+    }
+    .title {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .title h1 {
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+    .title p {
+      font-size: 0.95rem;
+      color: #666;
+    }
+    .upload-wrapper {
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .upload-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: #fafafa;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+    .upload-label:hover {
+      background: #f0f0ff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
+    .upload-label span.icon {
+      font-size: 1.1rem;
+    }
+    .upload-label input[type="file"] {
+      display: none;
+    }
+    .hint {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .scratch-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+    }
+    .reveal-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      z-index: 0;
+    }
+    .bg-photo {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, #9bb8ff, #3b3b98);
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.7);
+      z-index: -1;
+    }
+    .reveal-text {
+      padding: 16px;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    }
+    .reveal-text h2 {
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+    .reveal-text p {
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+    .reveal-text .boys {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      touch-action: none;
+      cursor: grab;
+    }
+    .footer-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="title">
+      <h1>Carte à gratter : révélation des jumeaux</h1>
+      <p>Grattez la carte pour découvrir le sexe de vos bébés 💙💙</p>
+    </div>
+    <div class="upload-wrapper">
+      <label class="upload-label">
+        <span class="icon">📷</span>
+        <span>Choisir une photo d'arrière-plan</span>
+        <input type="file" id="bgUpload" accept="image/*">
+      </label>
+      <div class="hint">
+        Ajoutez une photo de couple, d'échographie, etc. Elle sera visible sous la zone à gratter.
+      </div>
+    </div>
+    <div class="scratch-wrapper" id="scratchWrapper">
+      <div class="reveal-layer">
+        <div class="bg-photo" id="bgPhoto"></div>
+        <div class="reveal-text">
+          <h2>Félicitations ! 🎉</h2>
+          <p>Vos jumeaux sont...</p>
+          <p class="boys">Deux garçons 👦👦</p>
+        </div>
+      </div>
+      <canvas id="scratchCanvas"></canvas>
+    </div>
+    <div class="footer-note">Astuce : sur mobile, grattez avec le doigt 😉</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scratchCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrapper = document.getElementById('scratchWrapper');
+
+    function resizeCanvas() {
+      const rect = wrapper.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      ctx.globalCompositeOperation = 'source-over';
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#b0b0b8');
+      gradient.addColorStop(1, '#8a8a95');
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.font = 'bold 20px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Grattez ici ✨', canvas.width / 2, canvas.height / 2);
+
+      ctx.globalCompositeOperation = 'destination-out';
+    }
+
+    window.addEventListener('load', resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
+
+    let isDrawing = false;
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      return { x, y };
+    }
+
+    function start(e) {
+      e.preventDefault();
+      isDrawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      draw(e);
+    }
+
+    function end(e) {
+      isDrawing = false;
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const pos = getPos(e);
+
+      ctx.lineWidth = 35;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', end);
+
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    window.addEventListener('touchend', end);
+
+    const bgUpload = document.getElementById('bgUpload');
+    const bgPhoto = document.getElementById('bgPhoto');
+
+    bgUpload.addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => bgPhoto.style.backgroundImage = `url('${ev.target.result}')`;
+      reader.readAsDataURL(file);
+    });
+
+  </script>
+</body>
+</html>
