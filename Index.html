@@ -163,75 +163,108 @@
 
   <script>
     const canvas = document.getElementById('scratchCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext && canvas.getContext('2d');
     const wrapper = document.getElementById('scratchWrapper');
 
-    function resizeCanvas() {
-      const rect = wrapper.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+    if (!ctx) {
+      console.warn('Canvas 2D context not available.');
+      // hide canvas if not available
+      if (canvas) canvas.style.display = 'none';
+    } else {
+      function resizeCanvas() {
+        const rect = wrapper.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        // set canvas internal size for high-DPI
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        // set canvas CSS size
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
 
-      ctx.globalCompositeOperation = 'source-over';
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#b0b0b8');
-      gradient.addColorStop(1, '#8a8a95');
+        // scale drawing operations to use CSS pixels coordinates
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // draw overlay in user space (CSS pixels)
+        ctx.globalCompositeOperation = 'source-over';
+        const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+        gradient.addColorStop(0, '#b0b0b8');
+        gradient.addColorStop(1, '#8a8a95');
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-      ctx.font = 'bold 20px system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Grattez ici ✨', canvas.width / 2, canvas.height / 2);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, rect.width, rect.height);
 
-      ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.font = 'bold 20px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Grattez ici ✨', rect.width / 2, rect.height / 2);
+
+        // switch to erase mode
+        ctx.globalCompositeOperation = 'destination-out';
+      }
+
+      window.addEventListener('load', resizeCanvas);
+      window.addEventListener('resize', resizeCanvas);
+
+      let isDrawing = false;
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (e.touches && e.touches.length) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length) {
+          clientX = e.changedTouches[0].clientX;
+          clientY = e.changedTouches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        return { x, y };
+      }
+
+      function start(e) {
+        e.preventDefault();
+        isDrawing = true;
+        canvas.style.cursor = 'grabbing';
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        draw(e);
+      }
+
+      function end(e) {
+        isDrawing = false;
+        canvas.style.cursor = 'grab';
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+
+        ctx.lineWidth = 35; // in CSS pixels (user space)
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      }
+
+      // initial cursor
+      canvas.style.cursor = 'grab';
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', end);
+
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      window.addEventListener('touchend', end);
     }
-
-    window.addEventListener('load', resizeCanvas);
-    window.addEventListener('resize', resizeCanvas);
-
-    let isDrawing = false;
-
-    function getPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-      return { x, y };
-    }
-
-    function start(e) {
-      e.preventDefault();
-      isDrawing = true;
-      const pos = getPos(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-      draw(e);
-    }
-
-    function end(e) {
-      isDrawing = false;
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-      e.preventDefault();
-      const pos = getPos(e);
-
-      ctx.lineWidth = 35;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-    }
-
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', draw);
-    window.addEventListener('mouseup', end);
-
-    canvas.addEventListener('touchstart', start, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    window.addEventListener('touchend', end);
 
     const bgUpload = document.getElementById('bgUpload');
     const bgPhoto = document.getElementById('bgPhoto');
